@@ -19,7 +19,7 @@ public class CompraController {
     private CompraService service;
 
     @GetMapping("/")
-    public Compra getBitcoinPrice(@RequestParam String cpf, @RequestParam BigDecimal quantidade, @RequestParam BigDecimal saldo) {
+    public Compra buyBitcoin(@RequestParam String cpf, @RequestParam BigDecimal quantidade, @RequestParam BigDecimal saldo) {
         return service.buyBitcoin(cpf, quantidade, saldo);
     }
 }
