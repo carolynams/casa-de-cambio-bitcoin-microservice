@@ -5,6 +5,7 @@ import com.example.casadecambio.bitcoin.repository.CompraRepository;
 import com.example.casadecambio.bitcoin.repository.jpa.CompraRepositoryJpa;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import java.util.*;
 
 @Repository
 public class CompraRespositoryImpl implements CompraRepository {
@@ -18,7 +19,7 @@ public class CompraRespositoryImpl implements CompraRepository {
     }
 
     @Override
-    public Compra findByCpf(String cpf) {
+    public List<Compra> findByCpf(String cpf) {
         return repositoryJpa.findByCpf(cpf);
     }
 }

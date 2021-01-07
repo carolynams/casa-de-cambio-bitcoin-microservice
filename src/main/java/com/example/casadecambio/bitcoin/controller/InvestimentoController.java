@@ -13,8 +13,8 @@ public class InvestimentoController {
     @Autowired
     private InvestimentoService service;
 
-    @GetMapping("/{cpf}")
-    public Mono<Investimento> getLucro(@PathVariable String cpf) {
-        return service.getValorInvestido(cpf);
+    @GetMapping("/{id}")
+    public Investimento getLucro(@PathVariable Long id) {
+        return service.getValorInvestido(id);
     }
 }

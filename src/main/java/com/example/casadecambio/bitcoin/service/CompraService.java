@@ -10,12 +10,13 @@ import com.example.casadecambio.bitcoin.repository.InvestimentoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import java.util.*;
 
 import java.math.BigDecimal;
 
 import static java.math.BigDecimal.ZERO;
 import static java.math.RoundingMode.HALF_EVEN;
-import static java.time.LocalDateTime.now;
+import static java.util.Objects.nonNull;
 
 @Service
 public class CompraService {
@@ -39,11 +40,12 @@ public class CompraService {
                 .map(Bitcoin::getData)
                 .map(bitcoin -> {
                     BigDecimal valorDaCompra = bitcoin.getAmount().multiply(quantidade);
-                    return new CompraBuilder()
+                    Compra saveCompra = new CompraBuilder()
                             .setCpf(cpf)
                             .setQuantidade(quantidade)
                             .setValorDaCompra(valorDaCompra)
                             .createCompra();
+                    return saveCompra;
                 });
         Mono<Investimento> investimentoMono = setInvestimento(compra.block().getValorDaCompra(), quantidade, cpf);
         investimentoRepository.save(investimentoMono.block());
@@ -54,24 +56,30 @@ public class CompraService {
         return bitcoinService.getBitcoinPrice();
     }
 
-    public Compra findByCpf(String cpf) {
+    public List<Compra> findByCpf(String cpf) {
         return repository.findByCpf(cpf);
     }
 
     private Mono<Investimento> setInvestimento(BigDecimal valorTotalDoBitcoin, BigDecimal quantidade, String cpf) {
         Mono<Bitcoin> bitcoinPrice = getBitcoinPrice();
+        Investimento investimentoFound = investimentoRepository.findByCpf(cpf);
 
         return bitcoinPrice
                 .map(Bitcoin::getData)
-                .map(bitcoin -> new InvestimentoBuilder()
-                        .setCpf(cpf)
-                        .setTipo(bitcoin.getBase())
-                        .setValorInvestido(valorTotalDoBitcoin.setScale(3, HALF_EVEN))
-                        .setQuantidadeInvestida(quantidade)
-                        .setLucro(ZERO)
-                        .setDataDoInvestimento(now())
-                        .setCotacaoAtualBitcoin(bitcoin.getAmount())
-                        .createInvestimento());
-
+                .map(bitcoin -> {
+                    Investimento investimento = new InvestimentoBuilder()
+                            .setCpf(cpf)
+                            .setTipo(bitcoin.getBase())
+                            .setValorInvestido(valorTotalDoBitcoin.setScale(3, HALF_EVEN))
+                            .setQuantidadeInvestida(quantidade)
+                            .setLucro(ZERO)
+                            .setCotacaoAtualBitcoin(bitcoin.getAmount())
+                            .createInvestimento();
+                    if (nonNull(investimentoFound)) {
+                        investimentoFound.update(investimento);
+                        return investimentoRepository.save(investimentoFound);
+                    }
+                    return investimento;
+                });
     }
 }

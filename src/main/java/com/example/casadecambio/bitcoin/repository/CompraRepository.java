@@ -1,10 +1,11 @@
 package com.example.casadecambio.bitcoin.repository;
 
 import com.example.casadecambio.bitcoin.model.Compra;
+import java.util.*;
 
 public interface CompraRepository {
 
     Compra save(Compra compra);
 
-    Compra findByCpf(String cpf);
+    List<Compra> findByCpf(String cpf);
 }

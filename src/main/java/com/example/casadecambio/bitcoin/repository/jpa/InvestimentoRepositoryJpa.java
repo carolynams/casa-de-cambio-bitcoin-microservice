@@ -4,4 +4,6 @@ import com.example.casadecambio.bitcoin.model.Investimento;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface InvestimentoRepositoryJpa extends JpaRepository<Investimento, Long> {
+
+    Investimento findByCpf(String cpf);
 }
