@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/investimento")
@@ -16,7 +17,7 @@ public class InvestimentoController {
     private InvestimentoService service;
 
     @GetMapping("/")
-    public Investimento getLucro(@RequestParam String cpf) {
+    public Mono<Investimento> getLucro(@RequestParam String cpf) {
         return service.getValorInvestido(cpf);
     }
 }

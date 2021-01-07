@@ -2,10 +2,13 @@ package com.example.casadecambio.bitcoin.model;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.beans.BeanUtils;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import static java.math.RoundingMode.HALF_EVEN;
 
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -36,11 +39,11 @@ public class Investimento {
 
     public Investimento(String tipo, BigDecimal valorInvestido, BigDecimal quantidadeInvestida, BigDecimal lucro, LocalDateTime dataDoInvestimento, BigDecimal cotacaoAtualBitcoin, String cpf) {
         this.tipo = tipo;
-        this.valorInvestido = valorInvestido;
+        this.valorInvestido = valorInvestido.setScale(3, HALF_EVEN);
         this.quantidadeInvestida = quantidadeInvestida;
-        this.lucro = lucro;
+        this.lucro = lucro.setScale(3, HALF_EVEN);
         this.dataDoInvestimento = dataDoInvestimento;
-        this.cotacaoAtualBitcoin = cotacaoAtualBitcoin;
+        this.cotacaoAtualBitcoin = cotacaoAtualBitcoin.setScale(3, HALF_EVEN);
         this.cpf = cpf;
     }
 }

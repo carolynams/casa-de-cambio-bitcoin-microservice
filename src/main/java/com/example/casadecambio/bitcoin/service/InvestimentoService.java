@@ -20,31 +20,30 @@ public class InvestimentoService {
     private InvestimentoRepository repository;
 
     @Autowired
-    private CompraService compraService;
-
-    @Autowired
     private CompraRepository compraRepository;
 
-    public Investimento getValorInvestido(String cpf) {
-        Mono<Bitcoin> bitcoinPrice = compraService.getBitcoinPrice();
+    @Autowired
+    private BitcoinService bitcoinService;
+
+    public Mono<Investimento> getValorInvestido(String cpf) {
+        Mono<Bitcoin> bitcoinPrice = bitcoinService.getBitcoinPrice();
         Compra compra = compraRepository.findByCpf(cpf);
 
-        Mono<Investimento> investimentoMono = bitcoinPrice
+        return bitcoinPrice
                 .map(Bitcoin::getData)
                 .map(bitcoin -> {
-                    float valorDaCompraDeBitcoin = compra.getValorUnitarioBitcoin().setScale(2, HALF_EVEN).floatValue();
-                    float valorAtualBitcoin = bitcoin.getAmount().setScale(2, HALF_EVEN).floatValue();
-                    return new InvestimentoBuilder()
+                    float valorDaCompraDeBitcoin = compra.getValorDaCompra().setScale(3, HALF_EVEN).floatValue();
+                    float valorAtualBitcoin = bitcoin.getAmount().setScale(3, HALF_EVEN).floatValue();
+                    Investimento investimento = new InvestimentoBuilder()
                             .setCpf(cpf)
                             .setTipo(bitcoin.getBase())
                             .setValorInvestido(compra.getValorDaCompra())
                             .setQuantidadeInvestida(compra.getQuantidadeDeBitcoins())
-                            .setLucro(valueOf(valorDaCompraDeBitcoin - valorAtualBitcoin).setScale(2, HALF_EVEN))
+                            .setLucro(valueOf(valorAtualBitcoin - valorDaCompraDeBitcoin))
                             .setDataDoInvestimento(compra.getHorarioDaTransacao())
                             .setCotacaoAtualBitcoin(bitcoin.getAmount())
                             .createInvestimento();
+                   return repository.save(investimento);
                 });
-
-        return repository.save(investimentoMono.block());
     }
 }

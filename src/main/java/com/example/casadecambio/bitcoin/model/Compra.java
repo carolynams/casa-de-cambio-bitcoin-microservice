@@ -10,7 +10,10 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
+
+import static org.springframework.beans.BeanUtils.copyProperties;
 
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -26,8 +29,6 @@ public class Compra {
 
     private BigDecimal valorDaCompra;
 
-    private BigDecimal valorUnitarioBitcoin;
-
     @NotNull
     private String cpf;
 
@@ -38,11 +39,10 @@ public class Compra {
         this.horarioDaTransacao = LocalDateTime.now();
     }
 
-    public Compra(BigDecimal quantidadeDeBitcoins, BigDecimal valorDaCompra, BigDecimal valorUnitarioBitcoin, String cpf) {
+    public Compra(BigDecimal quantidadeDeBitcoins, BigDecimal valorDaCompra, String cpf) {
         this.quantidadeDeBitcoins = quantidadeDeBitcoins;
-        this.valorDaCompra = valorDaCompra;
-        this.valorUnitarioBitcoin = valorUnitarioBitcoin;
-        this.horarioDaTransacao = LocalDateTime.now();
+        this.valorDaCompra = valorDaCompra.setScale(3, RoundingMode.HALF_UP);
         this.cpf = cpf;
+        this.horarioDaTransacao = LocalDateTime.now();
     }
 }

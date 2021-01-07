@@ -6,6 +6,8 @@ import com.example.casadecambio.bitcoin.repository.jpa.InvestimentoRepositoryJpa
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public class InvestimentoRespositoryImpl implements InvestimentoRepository {
 
@@ -16,5 +18,4 @@ public class InvestimentoRespositoryImpl implements InvestimentoRepository {
     public Investimento save(Investimento investimento) {
         return repositoryJpa.save(investimento);
     }
-
 }

@@ -6,5 +6,4 @@ public interface InvestimentoRepository {
 
     Investimento save(Investimento investimento);
 
-
 }

@@ -1,6 +1,5 @@
 package com.example.casadecambio.bitcoin.service;
 
-import com.example.casadecambio.bitcoin.exceptions.DataIntegrityViolationException;
 import com.example.casadecambio.bitcoin.model.Bitcoin;
 import com.example.casadecambio.bitcoin.model.Compra;
 import com.example.casadecambio.bitcoin.model.Investimento;
@@ -14,7 +13,6 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 
-import static com.example.casadecambio.bitcoin.exceptions.DataIntegrityViolationException.SALDO_INSUFICIENTE;
 import static java.math.BigDecimal.ZERO;
 import static java.math.RoundingMode.HALF_EVEN;
 import static java.time.LocalDateTime.now;
@@ -31,40 +29,33 @@ public class CompraService {
     @Autowired
     private BitcoinService bitcoinService;
 
-    public Compra buyBitcoin(String cpf, BigDecimal quantidade, BigDecimal saldo) {
-        Compra compra = getBitcoinPurchaseValue(quantidade, cpf)
-                .block();
-
-        BigDecimal valorTotalDoBitcoin = compra.getValorDaCompra();
-
-        if (saldo.floatValue() >= valorTotalDoBitcoin.floatValue()) {
-            valorTotalDoBitcoin.add(saldo.negate());
-
-            Investimento investimento = setInvestimento(valorTotalDoBitcoin, quantidade, cpf)
-                    .block();
-
-            investimentoRepository.save(investimento);
-        } else {
-            throw new DataIntegrityViolationException(SALDO_INSUFICIENTE);
-        }
-        return repository.save(compra);
+    public Compra buyBitcoin(Compra compra) {
+        return repository.save(getBitcoinPurchaseValue(compra.getQuantidadeDeBitcoins(), compra.getCpf()).block());
     }
 
     private Mono<Compra> getBitcoinPurchaseValue(BigDecimal quantidade, String cpf) {
         Mono<Bitcoin> bitcoinPrice = getBitcoinPrice();
-
-        return bitcoinPrice
+        Mono<Compra> compra = bitcoinPrice
                 .map(Bitcoin::getData)
-                .map(bitcoin -> new CompraBuilder()
-                        .setCpf(cpf)
-                        .setQuantidade(quantidade)
-                        .setValorDaCompra(bitcoin.getAmount().multiply(quantidade).setScale(2, HALF_EVEN))
-                        .setValorUnitarioBitcoin(bitcoin.getAmount().setScale(2, HALF_EVEN))
-                        .createCompra());
+                .map(bitcoin -> {
+                    BigDecimal valorDaCompra = bitcoin.getAmount().multiply(quantidade);
+                    return new CompraBuilder()
+                            .setCpf(cpf)
+                            .setQuantidade(quantidade)
+                            .setValorDaCompra(valorDaCompra)
+                            .createCompra();
+                });
+        Mono<Investimento> investimentoMono = setInvestimento(compra.block().getValorDaCompra(), quantidade, cpf);
+        investimentoRepository.save(investimentoMono.block());
+        return compra;
     }
 
     public Mono<Bitcoin> getBitcoinPrice() {
         return bitcoinService.getBitcoinPrice();
+    }
+
+    public Compra findByCpf(String cpf) {
+        return repository.findByCpf(cpf);
     }
 
     private Mono<Investimento> setInvestimento(BigDecimal valorTotalDoBitcoin, BigDecimal quantidade, String cpf) {
@@ -75,11 +66,12 @@ public class CompraService {
                 .map(bitcoin -> new InvestimentoBuilder()
                         .setCpf(cpf)
                         .setTipo(bitcoin.getBase())
-                        .setValorInvestido(valorTotalDoBitcoin.setScale(2, HALF_EVEN))
+                        .setValorInvestido(valorTotalDoBitcoin.setScale(3, HALF_EVEN))
                         .setQuantidadeInvestida(quantidade)
                         .setLucro(ZERO)
                         .setDataDoInvestimento(now())
                         .setCotacaoAtualBitcoin(bitcoin.getAmount())
                         .createInvestimento());
+
     }
 }
