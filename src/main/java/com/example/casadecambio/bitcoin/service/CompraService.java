@@ -2,21 +2,16 @@ package com.example.casadecambio.bitcoin.service;
 
 import com.example.casadecambio.bitcoin.model.Bitcoin;
 import com.example.casadecambio.bitcoin.model.Compra;
-import com.example.casadecambio.bitcoin.model.Investimento;
 import com.example.casadecambio.bitcoin.model.builder.CompraBuilder;
-import com.example.casadecambio.bitcoin.model.builder.InvestimentoBuilder;
 import com.example.casadecambio.bitcoin.repository.CompraRepository;
-import com.example.casadecambio.bitcoin.repository.InvestimentoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import java.util.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static java.math.BigDecimal.ZERO;
-import static java.math.RoundingMode.HALF_EVEN;
-import static java.util.Objects.nonNull;
 
 @Service
 public class CompraService {
@@ -25,10 +20,10 @@ public class CompraService {
     private CompraRepository repository;
 
     @Autowired
-    private InvestimentoRepository investimentoRepository;
+    private BitcoinService bitcoinService;
 
     @Autowired
-    private BitcoinService bitcoinService;
+    private InvestimentoService investimentoService;
 
     public Compra buyBitcoin(Compra compra) {
         return repository.save(getBitcoinPurchaseValue(compra.getQuantidadeDeBitcoins(), compra.getCpf()).block());
@@ -45,10 +40,9 @@ public class CompraService {
                             .setQuantidade(quantidade)
                             .setValorDaCompra(valorDaCompra)
                             .createCompra();
+                    investimentoService.setInvestimento(saveCompra.getValorDaCompra(), ZERO, quantidade, cpf);
                     return saveCompra;
                 });
-        Mono<Investimento> investimentoMono = setInvestimento(compra.block().getValorDaCompra(), quantidade, cpf);
-        investimentoRepository.save(investimentoMono.block());
         return compra;
     }
 
@@ -58,28 +52,5 @@ public class CompraService {
 
     public List<Compra> findByCpf(String cpf) {
         return repository.findByCpf(cpf);
-    }
-
-    private Mono<Investimento> setInvestimento(BigDecimal valorTotalDoBitcoin, BigDecimal quantidade, String cpf) {
-        Mono<Bitcoin> bitcoinPrice = getBitcoinPrice();
-        Investimento investimentoFound = investimentoRepository.findByCpf(cpf);
-
-        return bitcoinPrice
-                .map(Bitcoin::getData)
-                .map(bitcoin -> {
-                    Investimento investimento = new InvestimentoBuilder()
-                            .setCpf(cpf)
-                            .setTipo(bitcoin.getBase())
-                            .setValorInvestido(valorTotalDoBitcoin.setScale(3, HALF_EVEN))
-                            .setQuantidadeInvestida(quantidade)
-                            .setLucro(ZERO)
-                            .setCotacaoAtualBitcoin(bitcoin.getAmount())
-                            .createInvestimento();
-                    if (nonNull(investimentoFound)) {
-                        investimentoFound.update(investimento);
-                        return investimentoRepository.save(investimentoFound);
-                    }
-                    return investimento;
-                });
     }
 }

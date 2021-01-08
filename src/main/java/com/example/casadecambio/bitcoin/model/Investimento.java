@@ -19,27 +19,21 @@ public class Investimento {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String tipo;
-
     private BigDecimal valorInvestido;
 
     private BigDecimal quantidadeInvestida;
 
     private BigDecimal lucro;
 
-    private BigDecimal cotacaoAtualBitcoin;
-
     private String cpf;
 
     public Investimento() {
     }
 
-    public Investimento(String tipo, BigDecimal valorInvestido, BigDecimal quantidadeInvestida, BigDecimal lucro, BigDecimal cotacaoAtualBitcoin, String cpf) {
-        this.tipo = tipo;
+    public Investimento(BigDecimal valorInvestido, BigDecimal quantidadeInvestida, BigDecimal lucro, String cpf) {
         this.valorInvestido = valorInvestido.setScale(3, HALF_EVEN);
         this.quantidadeInvestida = quantidadeInvestida;
         this.lucro = lucro.setScale(3, HALF_EVEN);
-        this.cotacaoAtualBitcoin = cotacaoAtualBitcoin.setScale(3, HALF_EVEN);
         this.cpf = cpf;
     }
 

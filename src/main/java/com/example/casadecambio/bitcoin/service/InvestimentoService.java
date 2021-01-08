@@ -2,6 +2,7 @@ package com.example.casadecambio.bitcoin.service;
 
 import com.example.casadecambio.bitcoin.model.Bitcoin;
 import com.example.casadecambio.bitcoin.model.Compra;
+import com.example.casadecambio.bitcoin.model.Data;
 import com.example.casadecambio.bitcoin.model.Investimento;
 import com.example.casadecambio.bitcoin.model.builder.InvestimentoBuilder;
 import com.example.casadecambio.bitcoin.repository.CompraRepository;
@@ -11,12 +12,12 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.math.BigDecimal.ZERO;
-import static java.math.BigDecimal.valueOf;
 import static java.math.RoundingMode.HALF_EVEN;
+import static java.util.Objects.nonNull;
 
 
 @Service
@@ -31,47 +32,66 @@ public class InvestimentoService {
     @Autowired
     private BitcoinService bitcoinService;
 
+    @Autowired
+    private InvestimentoRepository investimentoRepository;
+
     public Investimento getValorInvestido(Long id) {
-        Mono<Bitcoin> bitcoinPrice = bitcoinService.getBitcoinPrice();
         Investimento investimentoFound = repository.findById(id);
         List<Compra> compra = compraRepository.findByCpf(investimentoFound.getCpf());
+        Mono<Bitcoin> bitcoinPrice = bitcoinService.getBitcoinPrice();
 
-        List<BigDecimal> valorDasCompras = new ArrayList<>();
-        List<BigDecimal> totalDeBitcoins = new ArrayList<>();
+        BigDecimal getBitcoinAmount = bitcoinPrice.map(Bitcoin::getData)
+                .map(Data::getAmount)
+                .block();
 
-        compra.forEach(c -> bitcoinPrice
-                .map(Bitcoin::getData)
-                .map(bitcoin -> {
-
-                    compra.forEach(compraDTO -> {
-                        BigDecimal valorToTalCompra = ZERO.setScale(3, HALF_EVEN);
-                        BigDecimal quantidadeDeBitcoins = ZERO.setScale(3, HALF_EVEN);
-
-                        valorDasCompras.add(compraDTO.getValorDaCompra());
-                        for (int i = 0; i < valorDasCompras.size(); i++) {
-                            valorToTalCompra.add(valorDasCompras.get(i));
-                        }
-                        totalDeBitcoins.add(compraDTO.getQuantidadeDeBitcoins());
-                        for (int i = 0; i < totalDeBitcoins.size(); i++) {
-                            quantidadeDeBitcoins.add(totalDeBitcoins.get(i));
-                        }
-
-                        float valorDaCompraDeBitcoin = valorToTalCompra.floatValue();
-                        float valorAtualBitcoin = bitcoin.getAmount().setScale(3, HALF_EVEN).floatValue();
-
-                        Investimento investimento = new InvestimentoBuilder()
-                                .setCpf(investimentoFound.getCpf())
-                                .setTipo(bitcoin.getBase())
-                                .setValorInvestido(valorToTalCompra)
-                                .setQuantidadeInvestida(quantidadeDeBitcoins)
-                                .setLucro(valueOf(valorAtualBitcoin - valorDaCompraDeBitcoin))
-                                .setCotacaoAtualBitcoin(bitcoin.getAmount())
-                                .createInvestimento();
-                        investimentoFound.update(investimento);
-                        repository.save(investimentoFound);
-                    });
-                    return investimentoFound;
-                }));
+        updateInvestimento(investimentoFound, compra, getBitcoinAmount);
         return investimentoFound;
+    }
+
+    private void updateInvestimento(Investimento investimentoFound, List<Compra> compra, BigDecimal getBitcoinAmount) {
+        BigDecimal valorToTalCompra = getTotalDaCompra(compra);
+        BigDecimal quantidadeDeBitcoins = getQuantidadeDeBitcoins(compra);
+        BigDecimal getLucro = valorToTalCompra.add(getBitcoinAmount.negate());
+        setInvestimento(valorToTalCompra, quantidadeDeBitcoins, getLucro, investimentoFound.getCpf());
+    }
+
+    private BigDecimal getTotalDaCompra(List<Compra> compra) {
+        BigDecimal valorToTalCompra = ZERO;
+        List<BigDecimal> listOfBitcoinPrice = compra.stream()
+                .map(Compra::getValorDaCompra)
+                .collect(Collectors.toList());
+
+        for (int i = 0; i < listOfBitcoinPrice.size(); i++) {
+            valorToTalCompra = valorToTalCompra.add(listOfBitcoinPrice.get(i));
+        }
+        return valorToTalCompra;
+    }
+
+    private BigDecimal getQuantidadeDeBitcoins(List<Compra> compra) {
+        BigDecimal quantidadeDeBitcoins = ZERO;
+        List<BigDecimal> listOfTotalDeBitcoins = compra.stream()
+                .map(Compra::getQuantidadeDeBitcoins)
+                .collect(Collectors.toList());
+        for (int j = 0; j < listOfTotalDeBitcoins.size(); j++) {
+            quantidadeDeBitcoins = quantidadeDeBitcoins.add(listOfTotalDeBitcoins.get(j));
+        }
+        return quantidadeDeBitcoins;
+    }
+
+    public Investimento setInvestimento(BigDecimal valorTotalDoBitcoin, BigDecimal quantidade, BigDecimal lucro, String cpf) {
+        Investimento investimentoFound = repository.findByCpf(cpf);
+
+        Investimento investimento = new InvestimentoBuilder()
+                .setCpf(cpf)
+                .setValorInvestido(valorTotalDoBitcoin.setScale(3, HALF_EVEN))
+                .setQuantidadeInvestida(quantidade.setScale(3, HALF_EVEN))
+                .setLucro(lucro.setScale(3, HALF_EVEN))
+                .createInvestimento();
+
+        if (nonNull(investimentoFound)) {
+            investimentoFound.update(investimento);
+            return investimentoRepository.save(investimentoFound);
+        }
+        return investimentoRepository.save(investimento);
     }
 }

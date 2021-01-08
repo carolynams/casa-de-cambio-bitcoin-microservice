@@ -5,17 +5,10 @@ import com.example.casadecambio.bitcoin.model.Investimento;
 import java.math.BigDecimal;
 
 public class InvestimentoBuilder {
-    private String tipo;
     private BigDecimal valorInvestido;
     private BigDecimal quantidadeInvestida;
     private BigDecimal lucro;
-    private BigDecimal cotacaoAtualBitcoin;
     private String cpf;
-
-    public InvestimentoBuilder setTipo(String tipo) {
-        this.tipo = tipo;
-        return this;
-    }
 
     public InvestimentoBuilder setValorInvestido(BigDecimal valorInvestido) {
         this.valorInvestido = valorInvestido;
@@ -32,10 +25,6 @@ public class InvestimentoBuilder {
         return this;
     }
 
-    public InvestimentoBuilder setCotacaoAtualBitcoin(BigDecimal cotacaoAtualBitcoin) {
-        this.cotacaoAtualBitcoin = cotacaoAtualBitcoin;
-        return this;
-    }
 
     public InvestimentoBuilder setCpf(String cpf) {
         this.cpf = cpf;
@@ -43,6 +32,6 @@ public class InvestimentoBuilder {
     }
 
     public Investimento createInvestimento() {
-        return new Investimento(tipo, valorInvestido, quantidadeInvestida, lucro, cotacaoAtualBitcoin, cpf);
+        return new Investimento(valorInvestido, quantidadeInvestida, lucro, cpf);
     }
 }
