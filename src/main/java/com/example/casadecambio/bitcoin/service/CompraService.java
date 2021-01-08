@@ -1,5 +1,6 @@
 package com.example.casadecambio.bitcoin.service;
 
+import com.example.casadecambio.bitcoin.exceptions.DataIntegrityViolationException;
 import com.example.casadecambio.bitcoin.model.Bitcoin;
 import com.example.casadecambio.bitcoin.model.Compra;
 import com.example.casadecambio.bitcoin.model.builder.CompraBuilder;
@@ -11,6 +12,7 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.util.List;
 
+import static com.example.casadecambio.bitcoin.exceptions.DataIntegrityViolationException.CLIENTE_NÃO_POSSUI_COMPRAS;
 import static java.math.BigDecimal.ZERO;
 
 @Service
@@ -51,6 +53,10 @@ public class CompraService {
     }
 
     public List<Compra> findByCpf(String cpf) {
+        List<Compra> compraFound = repository.findByCpf(cpf);
+        if (compraFound.size() < 1) {
+            throw new DataIntegrityViolationException(CLIENTE_NÃO_POSSUI_COMPRAS);
+        }
         return repository.findByCpf(cpf);
     }
 }
