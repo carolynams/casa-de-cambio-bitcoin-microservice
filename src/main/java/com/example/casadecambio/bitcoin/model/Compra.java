@@ -32,17 +32,12 @@ public class Compra {
     @NotNull
     private String cpf;
 
-    @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
-    private LocalDateTime horarioDaTransacao;
-
     public Compra() {
-        this.horarioDaTransacao = LocalDateTime.now();
     }
 
     public Compra(BigDecimal quantidadeDeBitcoins, BigDecimal valorDaCompra, String cpf) {
         this.quantidadeDeBitcoins = quantidadeDeBitcoins;
         this.valorDaCompra = valorDaCompra.setScale(3, RoundingMode.HALF_UP);
         this.cpf = cpf;
-        this.horarioDaTransacao = LocalDateTime.now();
     }
 }

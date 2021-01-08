@@ -9,8 +9,8 @@ import reactor.core.publisher.Mono;
 @Service
 public class BitcoinService {
 
-    private final String URL = "https://api.coinbase.com/v2/";
-    private final String BRL_PRICE = "prices/spot?currency=BRL";
+    public static final String URL = "https://api.coinbase.com/v2/";
+    public static final String BRL_PRICE = "prices/spot?currency=BRL";
     private WebClient webClient;
 
     @Autowired

@@ -28,7 +28,8 @@ public class CompraService {
     private InvestimentoService investimentoService;
 
     public Compra buyBitcoin(Compra compra) {
-        return repository.save(getBitcoinPurchaseValue(compra.getQuantidadeDeBitcoins(), compra.getCpf()).block());
+        return repository.save(getBitcoinPurchaseValue(compra.getQuantidadeDeBitcoins(),
+                compra.getCpf()).block());
     }
 
     private Mono<Compra> getBitcoinPurchaseValue(BigDecimal quantidade, String cpf) {

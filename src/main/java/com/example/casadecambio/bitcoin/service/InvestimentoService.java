@@ -13,11 +13,11 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.math.BigDecimal.ZERO;
 import static java.math.RoundingMode.HALF_EVEN;
 import static java.util.Objects.nonNull;
+import static java.util.stream.Collectors.toList;
 
 
 @Service
@@ -38,14 +38,19 @@ public class InvestimentoService {
     public Investimento getValorInvestido(Long id) {
         Investimento investimentoFound = repository.findById(id);
         List<Compra> compra = compraRepository.findByCpf(investimentoFound.getCpf());
+        BigDecimal getBitcoinAmount = getBitcoinAmount();
+
+        updateInvestimento(investimentoFound, compra, getBitcoinAmount);
+        return investimentoFound;
+    }
+
+    private BigDecimal getBitcoinAmount() {
         Mono<Bitcoin> bitcoinPrice = bitcoinService.getBitcoinPrice();
 
         BigDecimal getBitcoinAmount = bitcoinPrice.map(Bitcoin::getData)
                 .map(Data::getAmount)
                 .block();
-
-        updateInvestimento(investimentoFound, compra, getBitcoinAmount);
-        return investimentoFound;
+        return getBitcoinAmount;
     }
 
     private void updateInvestimento(Investimento investimentoFound, List<Compra> compra, BigDecimal getBitcoinAmount) {
@@ -59,7 +64,7 @@ public class InvestimentoService {
         BigDecimal valorToTalCompra = ZERO;
         List<BigDecimal> listOfBitcoinPrice = compra.stream()
                 .map(Compra::getValorDaCompra)
-                .collect(Collectors.toList());
+                .collect(toList());
 
         for (int i = 0; i < listOfBitcoinPrice.size(); i++) {
             valorToTalCompra = valorToTalCompra.add(listOfBitcoinPrice.get(i));
@@ -71,7 +76,8 @@ public class InvestimentoService {
         BigDecimal quantidadeDeBitcoins = ZERO;
         List<BigDecimal> listOfTotalDeBitcoins = compra.stream()
                 .map(Compra::getQuantidadeDeBitcoins)
-                .collect(Collectors.toList());
+                .collect(toList());
+
         for (int j = 0; j < listOfTotalDeBitcoins.size(); j++) {
             quantidadeDeBitcoins = quantidadeDeBitcoins.add(listOfTotalDeBitcoins.get(j));
         }
